@@ -184,7 +184,7 @@
     const params = currentParams();
 
     try {
-      const response = await fetch(`/api/simulate?${paramsQuery(params)}`, { signal: controller.signal });
+      const response = await window.quantumFetch(`/api/simulate?${paramsQuery(params)}`, { signal: controller.signal });
       const data = validateSimulation(await readJson(response));
       if (requestId !== state.simulateRequest) return;
       state.sim = data;
@@ -251,7 +251,7 @@
     if (state.sweep) $("#sweepError").textContent = "Recomputing sweep with current parameters…";
 
     try {
-      const response = await fetch(`/api/sweep?${query}`, { signal: controller.signal });
+      const response = await window.quantumFetch(`/api/sweep?${query}`, { signal: controller.signal });
       const data = validateSweep(await readJson(response));
       if (requestId !== state.sweepRequest) return;
       state.sweep = data;

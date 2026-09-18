@@ -20,6 +20,9 @@ STATIC = {"/": ("static/index.html", "text/html; charset=utf-8"),
           "/app.js": ("static/app.js", "text/javascript; charset=utf-8"),
           "/static/style.css": ("static/style.css", "text/css; charset=utf-8"),
           "/static/app.js": ("static/app.js", "text/javascript; charset=utf-8"),
+          "/static/api-client.js": ("static/api-client.js", "text/javascript; charset=utf-8"),
+          "/static/stationary-core.mjs": ("static/stationary-core.mjs", "text/javascript; charset=utf-8"),
+          "/static/stationary-worker.js": ("static/stationary-worker.js", "text/javascript; charset=utf-8"),
           "/static/surface.js": ("static/surface.js", "text/javascript; charset=utf-8"),
           "/static/packet-ui.js": ("static/packet-ui.js", "text/javascript; charset=utf-8"),
           "/static/packet-core.js": ("static/packet-core.js", "text/javascript; charset=utf-8"),
@@ -34,7 +37,7 @@ def source_archive():
     with ZipFile(buffer, "w", ZIP_DEFLATED) as archive:
         paths = [ROOT / name for name in ("app.py", "simulate.py", "validate.py", "README.md",
                                           "LICENSE", ".gitignore", "启动模拟器.command")]
-        for folder in ("quantum_tunneling", "static", "docs", "tests", ".github"):
+        for folder in ("quantum_tunneling", "static", "docs", "tests", "scripts", ".github"):
             paths.extend((ROOT / folder).rglob("*"))
         for path in sorted(paths):
             if path.is_file() and not path.is_symlink() and "__pycache__" not in path.parts:

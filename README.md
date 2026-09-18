@@ -1,6 +1,8 @@
 # Quantum Tunneling Lab
 
-An English-language, local interactive lab for **actual time-dependent wave-packet scattering** and stationary one-dimensional quantum tunneling. The interface retains the black, square-edged design and the interactive 3D transmission parameter surface.
+An English-language interactive lab for **actual time-dependent wave-packet scattering** and stationary one-dimensional quantum tunneling. The interface retains the black, square-edged design and the interactive 3D transmission parameter surface.
+
+[Open the live experiment](https://quantum-tunneling-lab.z1983138.chatgpt.site) — no installation or account required.
 
 ## Run
 
@@ -70,7 +72,7 @@ python3 validate.py
 
 ```sh
 python3 -m unittest discover -s tests -v
-node --test tests/test_packet.mjs
+node --test tests/*.mjs
 ```
 
 The independent JavaScript physics tests need Node.js 22+ (the browser application itself does not need Node). Seven wave-packet tests check free group motion and dispersion, probability conservation, spectrum-weighted rectangular transmission, suppression by barrier height, double-barrier resonance versus detuning, spatial/time refinement, boundary relocation, and a challenging supported parameter combination.
@@ -99,4 +101,15 @@ These are mathematical references, not imported code dependencies. All numerical
 
 ## Hosting
 
-This repository contains the complete runnable application. The wave-packet solver runs in a browser worker, while stationary simulations, sweeps and the 3D parameter surface use the Python API. Static hosting alone (including GitHub Pages) does not run the full application. The included server binds to localhost and is intended for local use.
+The published website runs all three experiments in browser workers, with no external API or CDN dependencies. `static/stationary-core.mjs` ports the original Python solver's finite-difference system, transparent lead conditions, potential grids and diagnostics to JavaScript. Stationary results, sweeps and the 3D surface are numerically computed on demand, not pre-rendered or substituted with analytic results. Changing parameters cancels obsolete worker calculations so the interface remains responsive. Computation speed depends on the visitor's device.
+
+Five additional tests compare complete wave functions and diagnostics against Python across all three potential shapes, threshold and propagating regimes, opaque barriers, refined grids, and half-cell gap rounding. They also compare sweeps and surface axes, check convergence and conservation, exercise the actual worker protocol, and verify cancellation and invalid-input handling. The comparison tolerance is 2 × 10⁻⁸ × (1 + |reference|) per numerical value; this checks agreement between implementations, not continuum accuracy.
+
+The Python application and CLI remain available: `python3 app.py` uses the Python HTTP API for stationary modes and a browser worker for wave packets. The static edition switches only the stationary computation transport:
+
+```sh
+python3 scripts/prepare_static.py
+python3 -m http.server 8767 --bind 127.0.0.1 --directory dist
+```
+
+Serve `dist/` at the root of an HTTP(S) origin. The build includes the English methods article, Chinese derivation and a source ZIP. Opening files through `file://` is not supported because module workers require an HTTP(S) origin. Rebuild after editing source; `dist/` is generated and excluded from Git.

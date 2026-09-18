@@ -34,7 +34,7 @@
     $('surfaceStatus').textContent=state.data?'Computing · showing previous result':'Computing';
     $('surfaceRefresh').disabled=true;
     try {
-      const response=await fetch('/api/surface?'+new URLSearchParams({...p,count:41}),{signal:controller.signal});
+      const response=await window.quantumFetch('/api/surface?'+new URLSearchParams({...p,count:41}),{signal:controller.signal});
       const data=await response.json();
       if(!response.ok) throw new Error(data.error||'Surface calculation failed');
       if(id!==state.request) return;
