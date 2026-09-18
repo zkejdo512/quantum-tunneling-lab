@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Explore wave-packet dynamics and stationary quantum tunneling through one-dimensional barriers."
+    />
+    <title>Quantum Tunneling Lab</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to experiment</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="/" aria-label="Quantum Tunneling home">
+
+          <span>
+            <span class="brand-en">Quantum Tunneling</span>
+            <span class="brand-cn">1D SCHRÖDINGER</span>
+          </span>
+        </a>
+        <nav class="header-nav" aria-label="More resources">
+          <a href="/blog">Theory & methods</a>
+          <a class="source-link" href="/source.zip" download>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15.5h12" /></svg>
+            Source code
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="workspace" class="page-shell">
+      <div class="workspace-bar">
+        <div class="view-tabs" role="tablist" aria-label="Experiment views">
+          <button id="packetTab" role="tab" aria-selected="true" aria-controls="packetPanel">Wave packet</button>
+          <button id="surfaceTab" role="tab" aria-selected="false" aria-controls="surfacePanel">3D surface</button>
+          <button id="waveTab" role="tab" aria-selected="false" aria-controls="wavePanel">Stationary wave</button>
+        </div>
+        <span id="regimePill">E &lt; V₀</span>
+      </div>
+
+      <div id="errorBanner" class="error-banner" role="alert" hidden>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 6v4m0 3h.01M3.7 16h12.6L10 4 3.7 16Z" /></svg>
+        <span id="errorText">Calculation temporarily unavailable.</span>
+        <button id="retryButton" type="button">Retry</button>
+      </div>
+
+
+      <section id="packetPanel" role="tabpanel" aria-labelledby="packetTab">
+        <div class="packet-intro"><h1>Watch a wave packet meet a barrier.</h1><p>A localized electron wave evolves through the time-dependent Schrödinger equation.</p></div>
+        <div class="packet-metrics" aria-label="Wave packet probabilities">
+          <div><span>LEFT REGION <small>x &lt; 0</small></span><strong id="packetLeft">—</strong></div>
+          <div><span>STRUCTURE <small>barriers + well</small></span><strong id="packetMiddle">—</strong></div>
+          <div><span>RIGHT REGION <small>x &gt; structure</small></span><strong id="packetRight">—</strong></div>
+          <div><span>TOTAL PROBABILITY <small>∫ |ψ|² dx</small></span><strong id="packetNorm">—</strong></div>
+        </div>
+        <div class="packet-grid">
+          <aside class="control-card">
+            <h2>Prepare the experiment</h2>
+            <div class="packet-presets"><button data-packet-preset="tunnel">Tunneling</button><button data-packet-preset="free">Free flight</button><button data-packet-preset="resonant">Resonance</button><button data-packet-preset="off">Off resonance</button></div>
+            <form id="packetForm">
+              <label class="packet-field">Barrier <select id="packetShape"><option value="rectangle">Single barrier</option><option value="double">Double barrier</option></select></label>
+              <label class="packet-field">Central energy E₀ <span><input id="packetEnergy" type="number" min="0.25" max="3" step="0.005" value="1"> eV</span></label>
+              <label class="packet-field">Barrier height <span><input id="packetHeight" type="number" min="0" max="5" step="0.1" value="1.5"> eV</span></label>
+              <label class="packet-field">Each barrier width <span><input id="packetWidth" type="number" min="0" max="1" step="0.02" value="0.3"> nm</span></label>
+              <label class="packet-field">Well width / gap <span><input id="packetGap" type="number" min="0" max="2" step="0.02" value="0.6" disabled> nm</span></label>
+              <label class="packet-field">Packet width σₓ <span><input id="packetSigma" type="number" min="0.7" max="2.4" step="0.1" value="1.4"> nm</span></label>
+              <label class="packet-field">Spatial resolution <select id="packetDx"><option value="0.02">0.020 nm</option><option value="0.01">0.010 nm · finer</option></select></label>
+              <button id="packetLaunch" class="packet-launch" type="submit">Launch wave packet</button>
+            </form>
+            <p id="packetParameterNote" class="packet-small">Change parameters, then launch a new experiment.</p>
+            <p class="packet-small">A wider packet has a narrower energy spread. Compare the two resonance presets with the same barrier geometry.</p>
+          </aside>
+          <article class="plot-card packet-plot">
+            <div class="plot-header"><div><h2>Wave packet · ψ(x, t)</h2><span id="packetRunLabel" class="quiet">Preparing the initial state</span></div><span id="packetTime">0.00 fs</span></div>
+            <div class="packet-legend"><span><i style="background:#cbd8cf"></i>|ψ|²</span><span><i style="background:#8aa292"></i>Re ψ</span><span><i style="background:#8c8780"></i>V(x), right axis</span></div>
+            <div class="packet-canvas-wrap"><canvas id="packetCanvas" role="img" aria-label="Time-dependent wave packet probability density, real amplitude and barrier potential"></canvas></div>
+            <div class="packet-playback"><button id="packetPlay" disabled>Play</button><button id="packetRewind" disabled>Before collision</button><label>Speed <select id="packetSpeed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><button id="packetEnd" disabled>Final frame</button></div>
+            <div class="packet-timeline"><input id="packetTimeline" type="range" min="0" max="480" step="1" value="0" disabled aria-label="Replay timeline"><span id="packetDuration">0 / 0 fs</span></div>
+            <p id="packetStatus" role="status" class="packet-status">Preparing experiment…</p>
+            <p id="packetInterpretation" class="packet-small packet-caption">Left-region probability includes the incident wave. It is not a reflection measurement before the collision.</p>
+          </article>
+        </div>
+        <div class="packet-comparison"><p id="packetSpectrum">A finite wave packet contains a distribution of energies.</p><p id="packetDiagnostics">Probability and boundary checks will appear here.</p></div>
+        <details class="packet-method"><summary>How this experiment is computed · assumptions &amp; sources</summary>
+          <p>We solve iℏ ∂ψ/∂t = [−C ∂²/∂x² + V(x)]ψ, with C = ℏ²/(2mₑ) = 0.0380998212 eV nm² and ℏ = 0.6582119569 eV fs. The normalized initial state is a Gaussian with density standard deviation σₓ and positive central momentum ℏk₀; E₀ = Ck₀². Its mean kinetic energy is slightly higher than E₀.</p>
+          <p>Second-order central differences in space and the unitary Crank–Nicolson step in time (Δt = 0.008 fs) evolve the complex wavefunction in a background worker. Replays use stored numerical states. Δx is independent of the steady-state controls. Barrier widths and gaps are rounded to the nearest spatial cell; the actual geometry is shown above.</p>
+          <p>The calculation uses a large box, −80 to +80 nm, with zero-valued wavefunction at the outside ghost points. These walls reflect: they are not open boundaries. The experiment stops before appreciable probability enters the outermost 8 nm (threshold 10⁻⁷). The plotted window is a central crop; all probabilities integrate the entire box. Total norm conservation checks the discrete evolution, not convergence to the continuum: compare both spatial resolutions.</p>
+          <p>Left, structure and right are spatial probabilities. Only after the incident packet has passed and the outgoing packets have separated can left/right be interpreted as approximate reflected/transmitted fractions. A double barrier may retain probability in its well longer than the time window. We do not relabel a finite-time value as an asymptotic coefficient. Single-energy T(E₀) differs from the packet's spectrum-weighted transmission; the rectangle reference averages the continuum analytic T over the initial Gaussian momentum distribution.</p>
+          <p>References: <a href="https://physics.byu.edu/courses/computational/docs/phys430/phys430.pdf" target="_blank" rel="noopener">Spencer &amp; Ware, Computational Physics 430, Labs 8–9 (BYU)</a>; <a href="https://arxiv.org/abs/physics/0701150" target="_blank" rel="noopener">van Dijk &amp; Toyama, Accurate numerical solutions of the time-dependent Schrödinger equation (2007)</a>. Numerical code was independently implemented; no external source code was copied.</p>
+        </details>
+      </section>
+      <div id="steadyWorkspace" hidden>
+      <section class="metrics" aria-label="Stationary scattering metrics">
+        <article class="metric-card metric-primary">
+          <div class="metric-label">Transmission <span>T</span></div>
+          <strong id="transmissionValue">—</strong>
+          <div class="meter" aria-hidden="true"><span id="transmissionBar"></span></div>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Reflection <span>R</span></div>
+          <strong id="reflectionValue">—</strong>
+          <p id="reflectionNote">Waiting for calculation</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Conservation error <span>|T + R − 1|</span></div>
+          <strong id="conservationValue">—</strong>
+          <p>Flux conservation; refine the grid to check accuracy</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-label">Rectangle reference error <span>|T<sub>num</sub> − T<sub>ana</sub>|</span></div>
+          <strong id="analyticErrorValue">—</strong>
+          <p id="analyticNote">Rectangle barriers only</p>
+        </article>
+      </section>
+
+      <section class="experiment-grid">
+        <aside class="control-card" aria-labelledby="controls-title">
+          <div class="section-heading compact">
+            <div>
+              <h2 id="controls-title">Parameters</h2>
+            </div>
+            <button id="resetButton" class="icon-button" type="button" title="Reset parameters" aria-label="Reset parameters">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 7A6 6 0 1 0 16 12M15.5 7V3m0 4h-4" /></svg>
+            </button>
+          </div>
+
+          <div class="preset-row" aria-label="Parameter presets">
+            <button class="preset active" type="button" data-preset="tunnel">Tunneling</button>
+            <button class="preset" type="button" data-preset="above">Above barrier</button>
+            <button class="preset" type="button" data-preset="double">Double barrier</button>
+          </div>
+
+          <form id="parameterForm" autocomplete="off">
+            <fieldset class="shape-fieldset">
+              <legend>Barrier shape</legend>
+              <div class="segmented-control">
+                <label><input type="radio" name="shape" value="rectangle" checked /><span>Rectangle</span></label>
+                <label><input type="radio" name="shape" value="triangle" /><span>Triangle</span></label>
+                <label><input type="radio" name="shape" value="double" /><span>Double barrier</span></label>
+              </div>
+            </fieldset>
+
+            <div class="control-group">
+              <div class="control-label">
+                <label for="energyRange">Incident energy <i>E</i></label>
+                <div class="number-unit"><input id="energyNumber" type="number" min="0.05" max="5" step="0.05" value="1" aria-label="Incident energy value" /><span>eV</span></div>
+              </div>
+              <input id="energyRange" class="range" type="range" min="0.05" max="5" step="0.05" value="1" />
+              <div class="range-limits"><span>0.05</span><span>5</span></div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <label for="heightRange">Barrier height <i>V₀</i></label>
+                <div class="number-unit"><input id="heightNumber" type="number" min="0" max="8" step="0.1" value="2" aria-label="Barrier height value" /><span>eV</span></div>
+              </div>
+              <input id="heightRange" class="range" type="range" min="0" max="8" step="0.1" value="2" />
+              <div class="range-limits"><span>0</span><span>8</span></div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-label">
+                <label for="widthRange">Barrier width <i>a</i></label>
+                <div class="number-unit"><input id="widthNumber" type="number" min="0" max="2" step="0.01" value="0.5" aria-label="Barrier width value" /><span>nm</span></div>
+              </div>
+              <input id="widthRange" class="range" type="range" min="0" max="2" step="0.01" value="0.5" />
+              <div class="range-limits"><span>0</span><span>2</span></div>
+            </div>
+
+            <div id="gapGroup" class="control-group is-disabled">
+              <div class="control-label">
+                <label for="gapRange">Barrier gap <i>d</i></label>
+                <div class="number-unit"><input id="gapNumber" type="number" min="0" max="2" step="0.01" value="0.5" aria-label="Double-barrier gap value" disabled /><span>nm</span></div>
+              </div>
+              <input id="gapRange" class="range" type="range" min="0" max="2" step="0.01" value="0.5" disabled />
+              <div class="range-limits"><span>0</span><span>Double barriers only</span><span>2</span></div>
+            </div>
+
+            <div class="precision-row">
+              <label for="dxSelect">
+                <span>Spatial step Δx</span>
+                <small>Use finer steps to check convergence</small>
+              </label>
+              <select id="dxSelect">
+                <option value="0.01">0.010 nm</option>
+                <option value="0.005" selected>0.005 nm</option>
+                <option value="0.0025">0.0025 nm</option>
+              </select>
+            </div>
+          </form>
+
+          <div class="method-note">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9v5m0-8h.01"/></svg>
+            <p><strong id="methodName">Numerical method</strong><span id="gridMeta">Connecting to solver…</span></p>
+          </div>
+        </aside>
+
+        <article id="surfacePanel" class="plot-card surface-card" role="tabpanel" aria-labelledby="surfaceTab">
+          <div class="plot-header">
+            <div><h2>Transmission surface</h2><span class="quiet">Width × height · fixed incident energy</span></div>
+            <div class="plot-actions">
+              <label class="surface-log"><input id="surfaceLog" type="checkbox" checked /> Log T</label>
+              <button id="surfaceResetView" type="button">Reset view</button>
+              <button id="surfaceDownload" type="button">PNG</button>
+            </div>
+          </div>
+          <div id="surfaceCanvasWrap" class="canvas-wrap surface-canvas-wrap">
+            <canvas id="surfaceCanvas" tabindex="0" role="img" aria-label="3D transmission surface over width and height; drag to rotate"></canvas>
+            <div id="surfaceLoading" class="canvas-loading" aria-live="polite">Computing surface…</div>
+          </div>
+          <div class="surface-toolbar">
+            <span>Drag to rotate · scroll to zoom · hover for values</span>
+            <div><span id="surfaceStatus" role="status">Waiting for calculation</span><button id="surfaceRefresh" type="button">Recompute</button></div>
+          </div>
+          <div id="surfaceMeta" class="quiet surface-meta">Parameter surface of a one-dimensional scattering model</div>
+        </article>
+        <article id="wavePanel" class="plot-card wave-card" role="tabpanel" aria-labelledby="waveTab" hidden>
+          <div class="plot-header">
+            <div class="section-heading compact">
+              <div>
+                <h2 id="wave-title">Stationary wavefunction & barrier</h2>
+              </div>
+            </div>
+            <div class="plot-actions">
+              <button id="phaseButton" class="phase-button" type="button" aria-pressed="false">
+                <svg class="play-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="m7 5 7 5-7 5V5Z" /></svg>
+                <svg class="pause-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5v10m6-10v10" /></svg>
+                <span>Play phase</span>
+              </button>
+              <button id="downloadPngButton" class="icon-button" type="button" title="Download wavefunction PNG" aria-label="Download wavefunction PNG">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15.5h12" /></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="legend" class="legend" aria-label="Toggle plot layers">
+            <button type="button" data-series="real" aria-pressed="true"><i style="--series:#a6bfae"></i>Re ψ</button>
+            <button type="button" data-series="imag" aria-pressed="true"><i style="--series:#999ba9"></i>Im ψ</button>
+            <button type="button" data-series="density" aria-pressed="true"><i style="--series:#d4d4d4"></i>|ψ|²</button>
+            <button type="button" data-series="potential" aria-pressed="true"><i class="area-key"></i>V(x)</button>
+          </div>
+
+          <div id="waveCanvasWrap" class="canvas-wrap wave-canvas-wrap">
+            <canvas id="waveCanvas" role="img" aria-label="Real and imaginary wavefunction, probability density and barrier potential"></canvas>
+            <div id="waveLoading" class="canvas-loading" aria-live="polite"><span></span>Solving stationary equation</div>
+            <div id="waveTooltip" class="chart-tooltip" hidden></div>
+          </div>
+          <div class="axis-foot"><span>Position x / nm</span><span id="phaseReadout">Phase φ = 0.00 rad</span></div>
+          <p class="phase-note">Phase playback rotates the stationary state ψ(x)e<sup>−iφ</sup>. Its density stays fixed; φ is a dimensionless phase. Use Wave packet for actual time-dependent propagation.</p>
+        </article>
+      </section>
+
+      <details class="plot-card sweep-card"><summary>1D sweep <span>Width / height / energy</span></summary><div class="sweep-content">
+        <div class="sweep-header">
+          <div class="section-heading compact">
+            <div>
+              <h2 id="sweep-title">Transmission sweep</h2>
+            </div>
+          </div>
+          <div class="sweep-controls">
+            <label class="select-label" for="sweepVariable"><span>Sweep variable</span>
+              <select id="sweepVariable">
+                <option value="width" selected>Barrier width a</option>
+                <option value="height">Barrier height V₀</option>
+                <option value="energy">Incident energy E</option>
+              </select>
+            </label>
+            <label class="mini-number" for="sweepStart"><span>From</span><input id="sweepStart" type="number" value="0" min="0" max="2" step="0.01" /></label>
+            <span class="range-arrow" aria-hidden="true">→</span>
+            <label class="mini-number" for="sweepStop"><span>To</span><input id="sweepStop" type="number" value="2" min="0" max="2" step="0.01" /></label>
+            <label class="switch-label"><input id="logScale" type="checkbox" /><span class="switch" aria-hidden="true"></span><span>Log scale</span></label>
+            <button id="runSweepButton" class="primary-button" type="button">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 14.5 8 10l3 2 5-7M4 17h12" /></svg>
+              Run sweep
+            </button>
+          </div>
+        </div>
+
+        <div class="sweep-layout">
+          <div>
+            <div id="sweepCanvasWrap" class="canvas-wrap sweep-canvas-wrap">
+              <canvas id="sweepCanvas" role="img" aria-label="Numerical and analytic transmission versus the selected parameter"></canvas>
+              <div id="sweepLoading" class="canvas-loading" hidden><span></span>Computing 81 sweep points</div>
+              <div id="sweepTooltip" class="chart-tooltip" hidden></div>
+            </div>
+            <div class="sweep-legend"><span><i></i>Numerical</span><span><i class="dashed"></i>Rectangle analytic</span><strong id="sweepError">No sweep yet</strong></div>
+          </div>
+          <aside class="insight-panel">
+            <h3 id="insightTitle">Width controls exponential decay</h3>
+            <p id="insightText">For E &lt; V₀ the wave is evanescent inside the barrier. Increasing width extends the decay region and suppresses transmission. A logarithmic axis reveals small probabilities.</p>
+            <div class="insight-formula">
+              <span>Tunneling approximation</span>
+              <strong>T ∝ e<sup>−2κa</sup></strong>
+              <small>κ = √[2m(V₀ − E)] / ℏ</small>
+            </div>
+          </aside>
+        </div>
+      </div></details>
+      </div>
+    </main>
+
+    <footer>
+      <p>1D Schrödinger equation · electron mass · V = 0 outside the barriers</p>
+      <button id="downloadCsvButton" class="text-button" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0 3.5-3.5M10 12 6.5 8.5M4 15.5h12" /></svg>
+        Download steady-state CSV
+      </button>
+    </footer>
+
+    <script src="/static/app.js" defer></script>
+    <script src="/static/surface.js" defer></script>
+    <script type="module" src="/static/packet-ui.js"></script>
+  </body>
+</html>
